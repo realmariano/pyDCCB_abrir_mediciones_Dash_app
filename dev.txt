@@ -1,0 +1,4 @@
+# local requirements
+# evrything the developer needs in addition to the production requirements
+# to use it:  pip install -r dev.txt
+-r requirements.txt
