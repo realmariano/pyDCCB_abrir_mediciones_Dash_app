@@ -1,0 +1,12 @@
+#production requirements, after each package original used is listed
+dash
+# dash-1.19.0
+pandas
+# pandas-1.2.3
+io
+os
+sys
+traceback
+re
+inspect
+openpyxl
