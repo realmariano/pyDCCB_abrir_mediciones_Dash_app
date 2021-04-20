@@ -1,3 +1,17 @@
+# Entrada de usuario
+# --------------------------------------------------
+
+
+archivo_de_medicion = '20210225_05_INTI_centro_200A60mV'
+archivo_de_protocolo = 'protocolo_rev6'
+# 'ENG' or 'ESP', this will impact on result because excel changes equations depending on language
+archivo_de_protocolo_idioma = 'ENG'
+n_estadistica_medicion = 20
+
+print(" archivo de medicion = {} \n archivo de protocolo = {} \n idioma del excel = {} \n numero de mediciones para la estadistica = {}".format(archivo_de_medicion, archivo_de_protocolo, archivo_de_protocolo_idioma, n_estadistica_medicion))
+
+
+
 # Carga de paquetes y definición de funciones
 #------------------------------------------------------------------------------------------------
 import pandas as pd
@@ -76,52 +90,31 @@ def clearCells(workbook, cells):
             cell.value = None
 
 
-# Entradas de usuario
-# --------------------------------------------------
-archivo_de_medicion = '20210225_05_INTI_centro_200A60mV'
-archivo_de_protocolo = 'protocolo_rev6'
-# 'ENG' or 'ESP', this will impact on result because excel changes equations depending on language
-archivo_de_protocolo_idioma = 'ENG'
-n_estadistica_medicion = 20
 
-print(" archivo de medicion = {} \n archivo de protocolo = {} \n idioma del excel = {} \n numero de mediciones para la estadistica = {}".format(archivo_de_medicion, archivo_de_protocolo, archivo_de_protocolo_idioma, n_estadistica_medicion))
+## to be improved
+""" ======================================================================
 
+I removed the code below and kept a long protocol with lots of sheets, because it does not copy the charts, so its easiert to just fill and then remove the ones not used create as much sheets as needed
+2 - 
+~~~
+for nn in range(len(qlist)):
+  source = xl['(0)']
+  target = xl.copy_worksheet(source)
+~~~
 
-# Dash front end
-# --------------------------------------------------
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+3- En el archivo de protocolo hay que modificar la inclusión del nombre de archivo de mea, set y config
 
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-# to include custom java and css is mandatory to add __name__ into app = dash.Dash()
-# default folder for custom js and css is /assets,  but you can customize this with the 
-# assets_url_path argument to dash.Dash.
+4- Incluir un método para que tome automáticamente si la medición se hace en aire o en el baño y corrija el valor de la resistencia (probablemente dos protocolos son necesarios para esto)
 
+5- Modificar celda P10 del protocolo a: 
+~~~
+=IFS(NUMBERVALUE(C23)<30,30,NUMBERVALUE(C23)<100,300,NUMBERVALUE(C23)<300,3000) 
+~~~
 
-app.layout = html.Div([
-    dcc.Upload(
-        id='upload-data',
-        children=html.Div([
-            'Drag and Drop o ',
-            html.A('seleccione archivos')
-        ]),
-        style={
-            'width': '50%',
-            'height': '60px',
-            'lineHeight': '60px',
-            'borderWidth': '1px',
-            'borderStyle': 'solid',
-            'borderColor': '#6c6', 
-            'backgroundColor': '#eee',
-            'borderRadius': '5px',
-            'textAlign': 'center',
-            'margin': '20px'
-        },
-        # Allow multiple files to be uploaded
-        multiple=True
-    ),
-    html.Div(id='output-data-upload'),
-])
+De forma tal que reconozca la relación del RE automáticamente.
 
+6- El programa no está generando correctamente la salida
+"""
 
 ##########################################
 #   Save data to xlsx file 
@@ -223,60 +216,8 @@ for qq in range(0,len(qlist)):
         sheet['F' + str(jj)] = datoFinal.rstrip()
         jj += 1
 
+
        
 # Save data changes to new excel file
 xl.save(meaFile + '_meas' + xlsx_extension)
 print('The file has been saved as: {}'.format(os.getcwd() + '\\' + meaFile + '_meas' + xlsx_extension))
-
-
-def process_content(contents, filename, date):
-    
-    
-    try:
-        if 'csv' in filename:
-            # Assume that the user uploaded a CSV file
-            df = pd.read_csv(
-                io.StringIO(decoded.decode('utf-8')))
-        elif 'xls' in filename:
-            # Assume that the user uploaded an excel file
-            df = pd.read_excel(io.BytesIO(decoded))
-    except Exception as e:
-        print(e)
-        return html.Div([
-            'There was an error processing this file.'
-        ])
-
-    return html.Div([
-        html.H5(filename),
-        html.H6(datetime.datetime.fromtimestamp(date)),
-
-        dash_table.DataTable(
-            data=df.to_dict('records'),
-            columns=[{'name': i, 'id': i} for i in df.columns]
-        ),
-
-        html.Hr(),  # horizontal line
-
-        # For debugging, display the raw contents provided by the web browser
-        html.Div('Raw Content'),
-        html.Pre(contents[0:200] + '...', style={
-            'whiteSpace': 'pre-wrap',
-            'wordBreak': 'break-all'
-        })
-    ])
-
-
-@app.callback(Output('output-data-upload', 'children'),
-              Input('upload-data', 'contents'),
-              State('upload-data', 'filename'),
-              State('upload-data', 'last_modified'))
-def update_output(list_of_contents, list_of_names, list_of_dates):
-    if list_of_contents is not None:
-        children = [
-            process_content(c, n, d) for c, n, d in zip(list_of_contents, list_of_names, list_of_dates)]
-        return children
-
-
-
-if __name__ == '__main__':
-    app.run_server(debug=True)
