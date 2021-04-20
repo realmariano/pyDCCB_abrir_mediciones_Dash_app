@@ -1,3 +1,18 @@
+# Entrada de usuario
+# --------------------------------------------------
+archivo_de_medicion = '20210225_05_INTI_centro_200A60mV'
+archivo_de_protocolo = 'protocolo_rev6'
+# 'ENG' or 'ESP', this will impact on result because excel changes equations depending on language
+archivo_de_protocolo_idioma = 'ENG'
+n_estadistica_medicion = 20
+
+print(" archivo de medicion = {} \n archivo de protocolo = {} \n idioma del excel = {} \n numero de mediciones para la estadistica = {}".format(archivo_de_medicion, archivo_de_protocolo, archivo_de_protocolo_idioma, n_estadistica_medicion))
+
+# select file to read
+meaFile = archivo_de_medicion
+path2File = meaFile + '.mea'
+
+
 # Carga de paquetes y definición de funciones
 #------------------------------------------------------------------------------------------------
 import pandas as pd
@@ -12,6 +27,11 @@ from openpyxl.formula.translate import Translator
 print('package import finished')
 
 
+
+###########################################
+#   function definitions
+###########################################
+
 def openFile(path2file):
     try:
         with open(path2File, mode='r') as f:  # para asegurar que se cierre correctamente uso with
@@ -23,12 +43,6 @@ def openFile(path2file):
             inspect.getframeinfo(inspect.currentframe()).lineno))
         print(exception)
         raise
-
-# Unused function, but perhaps we could use it in the next implementation
-def block2df(dataBlock, col_names, num_rows=15):
-    # returns block of data in data frame format, removes header and footer
-    dfData = pd.read_csv(f, delimiter= ';', header=0, names=col_names, skiprows=83, engine='python', nrows=num_rows)
-    return dfData
 
 # The function reads and arrange the data 'list' of the file called by openFile
 def read_mea_file(lines_of_mea_file):
@@ -75,62 +89,12 @@ def clearCells(workbook, cells):
         for cell in row:
             cell.value = None
 
-
-# Entradas de usuario
-# --------------------------------------------------
-archivo_de_medicion = '20210225_05_INTI_centro_200A60mV'
-archivo_de_protocolo = 'protocolo_rev6'
-# 'ENG' or 'ESP', this will impact on result because excel changes equations depending on language
-archivo_de_protocolo_idioma = 'ENG'
-n_estadistica_medicion = 20
-
-print(" archivo de medicion = {} \n archivo de protocolo = {} \n idioma del excel = {} \n numero de mediciones para la estadistica = {}".format(archivo_de_medicion, archivo_de_protocolo, archivo_de_protocolo_idioma, n_estadistica_medicion))
-
-
-# Dash front end
-# --------------------------------------------------
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-# to include custom java and css is mandatory to add __name__ into app = dash.Dash()
-# default folder for custom js and css is /assets,  but you can customize this with the 
-# assets_url_path argument to dash.Dash.
-
-
-app.layout = html.Div([
-    dcc.Upload(
-        id='upload-data',
-        children=html.Div([
-            'Drag and Drop o ',
-            html.A('seleccione archivos')
-        ]),
-        style={
-            'width': '50%',
-            'height': '60px',
-            'lineHeight': '60px',
-            'borderWidth': '1px',
-            'borderStyle': 'solid',
-            'borderColor': '#6c6', 
-            'backgroundColor': '#eee',
-            'borderRadius': '5px',
-            'textAlign': 'center',
-            'margin': '20px'
-        },
-        # Allow multiple files to be uploaded
-        multiple=True
-    ),
-    html.Div(id='output-data-upload'),
-])
-
-
 ##########################################
 #   Save data to xlsx file 
 ##########################################
 # The protocolo_rev#_AAA.xlsx already has all the data and sheets necessary, to be filled
 
-# select file to read
-meaFile = archivo_de_medicion
-path2File = meaFile + '.mea'
+
 # open path2File
 lines = openFile(path2File)
 # read path2File and save meas to qlist, it has a different file in each list element qlist[i]
@@ -223,60 +187,8 @@ for qq in range(0,len(qlist)):
         sheet['F' + str(jj)] = datoFinal.rstrip()
         jj += 1
 
+
        
 # Save data changes to new excel file
 xl.save(meaFile + '_meas' + xlsx_extension)
 print('The file has been saved as: {}'.format(os.getcwd() + '\\' + meaFile + '_meas' + xlsx_extension))
-
-
-def process_content(contents, filename, date):
-    
-    
-    try:
-        if 'csv' in filename:
-            # Assume that the user uploaded a CSV file
-            df = pd.read_csv(
-                io.StringIO(decoded.decode('utf-8')))
-        elif 'xls' in filename:
-            # Assume that the user uploaded an excel file
-            df = pd.read_excel(io.BytesIO(decoded))
-    except Exception as e:
-        print(e)
-        return html.Div([
-            'There was an error processing this file.'
-        ])
-
-    return html.Div([
-        html.H5(filename),
-        html.H6(datetime.datetime.fromtimestamp(date)),
-
-        dash_table.DataTable(
-            data=df.to_dict('records'),
-            columns=[{'name': i, 'id': i} for i in df.columns]
-        ),
-
-        html.Hr(),  # horizontal line
-
-        # For debugging, display the raw contents provided by the web browser
-        html.Div('Raw Content'),
-        html.Pre(contents[0:200] + '...', style={
-            'whiteSpace': 'pre-wrap',
-            'wordBreak': 'break-all'
-        })
-    ])
-
-
-@app.callback(Output('output-data-upload', 'children'),
-              Input('upload-data', 'contents'),
-              State('upload-data', 'filename'),
-              State('upload-data', 'last_modified'))
-def update_output(list_of_contents, list_of_names, list_of_dates):
-    if list_of_contents is not None:
-        children = [
-            process_content(c, n, d) for c, n, d in zip(list_of_contents, list_of_names, list_of_dates)]
-        return children
-
-
-
-if __name__ == '__main__':
-    app.run_server(debug=True)

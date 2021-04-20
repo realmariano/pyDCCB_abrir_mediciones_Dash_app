@@ -1,0 +1,24 @@
+to be improved
+======================================================================
+
+I removed the code below and kept a long protocol with lots of sheets, because it does not copy the charts, so its easiert to just fill and then remove the ones not used create as much sheets as needed
+2 - 
+~~~
+for nn in range(len(qlist)):
+  source = xl['(0)']
+  target = xl.copy_worksheet(source)
+~~~
+
+3- En el archivo de protocolo hay que modificar la inclusión del nombre de archivo de mea, set y config
+
+4- Incluir un método para que tome automáticamente si la medición se hace en aire o en el baño y corrija el valor de la resistencia (probablemente dos protocolos son necesarios para esto)
+
+5- Modificar celda P10 del protocolo a: 
+~~~
+=IFS(NUMBERVALUE(C23)<30,30,NUMBERVALUE(C23)<100,300,NUMBERVALUE(C23)<300,3000) 
+~~~
+
+De forma tal que reconozca la relación del RE automáticamente.
+
+6- El programa no está generando correctamente la salida
+"""
